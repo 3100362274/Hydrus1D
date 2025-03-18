@@ -467,7 +467,7 @@ c          if(TauW.gt.0) EpsH=abs(hNew(i)-hTemp(i))-abs(0.05*hNew(i))
      !        (1.-7.37e-6*(TempR  -4.)**2+3.79e-8*(TempR  -4.)**3)
         end if
         if(lDensity) BT=BT*fRo(1,Conc(1,i))/fRo(2,Conc(1,i))        ! Bulk density/dynamic viscosity
-        M=MatNum(i)
+        M=MatNum(i)                                                 ! 470-478 迟滞性计算，-1干燥，+1湿润
         if(Kappa(i).eq.-1) then
           hi1=amin1(hSat(M),hTemp(i)/Ah(i)/AT)
           hi2=amin1(hSat(M), hNew(i)/Ah(i)/AT)
@@ -477,17 +477,17 @@ c          if(TauW.gt.0) EpsH=abs(hNew(i)-hTemp(i))-abs(0.05*hNew(i))
         end if
         hiM=0.1*hi1+0.9*hi2
         if(iModel.lt.nTabMod) then          ! Conductivity
-          if(hi1.ge.hSat(M).and.hi2.ge.hSat(M)) then
-            Coni=ConSat(M)
+          if(hi1.ge.hSat(M).and.hi2.ge.hSat(M)) then  ! 饱和状态
+            Coni=ConSat(M)      ! 饱和导水率
           else if(hiM.gt.hTab(NTab(1),1).and.hiM.le.hTab(1,1).and. 
      !                                                      lTable) then
             iT=int((alog10(-hiM)-alh1)/dlh)+1
-            dh=(hiM-hTab(iT,1))/(hTab(iT+1,1)-hTab(iT,1))
+            dh=(hiM-hTab(iT,1))/(hTab(iT+1,1)-hTab(iT,1))  ! 插值权重
             Coni=ConTab(iT,M)+(ConTab(iT+1,M)-ConTab(iT,M))*dh
           else
-            Coni=FK(iModel,hiM,ParD(1,M))
+            Coni=FK(iModel,hiM,ParD(1,M))    ! 调用模型函数（如van Genuchten公式）
           end if
-        else if(iModel.eq.nTabMod) then     ! Tables
+        else if(iModel.eq.nTabMod) then     ! Tables  ! 类似逻辑，基于表格插值或外推
           if(hi1.ge.hSat(M).and.hi2.ge.hSat(M)) then
             Coni=ConSat(M)
           else if(hiM.ge.hTab(NTab(M),M).and.hiM.le.hTab(1,M)) then
@@ -557,7 +557,7 @@ c          if(TauW.gt.0) EpsH=abs(hNew(i)-hTemp(i))-abs(0.05*hNew(i))
           Cap(i)=Capi*ATh(i)*AThS(i)*AThW(M)/Ah(i)/AhW(M)/AT
           theta(i)=ThRR(i)+AThW(M)*ATh(i)*AThS(i)*(Thei-thr(M))
         end if
-        if(Iter.eq.0) ConO(i)=Con(i)
+        if(Iter.eq.0) ConO(i)=Con(i)   ! 保存初始导水率
 11    continue
       if(lVapor.or.lWTDep) then  ! Vapor flow
         call ConVapor(NumNP,NMat,MatNum,hNew,Temp,Con,Theta,ths,ConLT,
